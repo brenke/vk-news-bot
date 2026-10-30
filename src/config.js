@@ -98,6 +98,13 @@ export function loadConfig({ requireVk = true } = {}) {
       maxTopicLength: readInt('BOT_MAX_TOPIC_LENGTH', 120, { min: 2, max: 500 }),
       messageLimit: 4_000,
     },
+    links: {
+      shortener: ['auto', 'vk', 'clck', 'off'].includes(readString('LINK_SHORTENER', 'auto').toLowerCase())
+        ? readString('LINK_SHORTENER', 'auto').toLowerCase()
+        : 'auto',
+      cacheTtlMs: readInt('LINK_CACHE_TTL_SEC', 2_592_000, { min: 0, max: 31_536_000 }) * 1_000,
+      timeoutMs: readInt('LINK_TIMEOUT_MS', 8_000, { min: 1_000, max: 60_000 }),
+    },
     logLevel: readString('LOG_LEVEL', 'info').toLowerCase(),
   };
 

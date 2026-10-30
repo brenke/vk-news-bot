@@ -61,29 +61,28 @@ export function formatDateLabel(date, timeZone = 'Europe/Moscow', now = new Date
   return `${current.day} ${month}${year}, ${time}`;
 }
 
-function itemBlock(item, index, timeZone) {
-  const lines = [`${index + 1}. ${item.title}`, `${item.source} · ${formatDateLabel(item.date, timeZone)}`];
+function itemBlock(item, index) {
+  const lines = [`${index + 1}. ${item.title}`];
   if (item.summary) lines.push(item.summary);
-  lines.push(`→ ${item.link}`);
+  lines.push(item.link);
   return lines.join('\n');
 }
 
 /**
- * @param {{topic:string, items:Array, total:number, aiUsed:boolean, windowHours:number, timeZone:string}} result
+ * @param {{topic:string, items:Array, total?:number, aiUsed?:boolean, windowHours?:number, timeZone?:string}} result
  */
 export function formatNews(result, { maxLength = 3_900 } = {}) {
-  const { topic, items, total = items.length, windowHours, timeZone = 'Europe/Moscow' } = result;
+  const { topic, items } = result;
   const header = `📰 Новости по теме «${topic}»`;
-  const footer = `\n\nПериод: ${windowHours} ч · найдено: ${total}`;
 
   let body = '';
   let shown = 0;
 
   for (const item of items) {
-    const block = itemBlock(item, shown, timeZone);
+    const block = itemBlock(item, shown);
     const candidate = body ? `${body}\n\n${block}` : block;
 
-    if (header.length + 2 + candidate.length + footer.length > maxLength) break;
+    if (header.length + 2 + candidate.length > maxLength) break;
 
     body = candidate;
     shown += 1;
@@ -91,24 +90,14 @@ export function formatNews(result, { maxLength = 3_900 } = {}) {
 
   if (shown === 0) {
     const item = items[0];
-    const fallback = [
-      `1. ${truncate(item.title, 400)}`,
-      `${item.source} · ${formatDateLabel(item.date, timeZone)}`,
-      item.summary ? truncate(item.summary, 200) : '',
-      `→ ${item.link}`,
-    ]
+    const fallback = [`1. ${truncate(item.title, 400)}`, item.summary ? truncate(item.summary, 200) : '', item.link]
       .filter(Boolean)
       .join('\n');
 
     return `${header}\n\n${fallback}`.slice(0, maxLength);
   }
 
-  const skipped = items.length - shown;
-  let text = `${header}\n\n${body}`;
-  if (skipped > 0) text += `\n\n…и ещё ${skipped}. Сузьте тему, чтобы увидеть остальное.`;
-  else if (text.length + footer.length <= maxLength) text += footer;
-
-  return text;
+  return `${header}\n\n${body}`;
 }
 
 export function formatNoResults(topic, { windowHours = 72 } = {}) {

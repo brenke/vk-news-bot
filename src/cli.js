@@ -1,5 +1,6 @@
 import { loadConfig } from './config.js';
 import { formatNews, formatNoResults } from './format.js';
+import { createLinkShortener } from './links.js';
 import { createLogger } from './logger.js';
 import { createNewsService } from './news/service.js';
 
@@ -16,6 +17,7 @@ function usage() {
   --limit N     сколько новостей показать
   --exact       искать все слова темы
   --no-ai       не обращаться к DeepSeek
+  --no-short    не сокращать ссылки
   --json        вывести сырые данные вместо готового сообщения
   --stats       показать статистику поиска
   --debug       подробные логи
@@ -23,7 +25,7 @@ function usage() {
 }
 
 function parseArgs(argv) {
-  const options = { hours: null, limit: null, exact: false, json: false, stats: false, noAi: false, debug: false, words: [] };
+  const options = { hours: null, limit: null, exact: false, json: false, stats: false, noAi: false, noShort: false, debug: false, words: [] };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -46,6 +48,9 @@ function parseArgs(argv) {
         break;
       case '--no-ai':
         options.noAi = true;
+        break;
+      case '--no-short':
+        options.noShort = true;
         break;
       case '--debug':
         options.debug = true;
@@ -119,7 +124,17 @@ async function main() {
   if (result.items.length === 0) {
     console.log(formatNoResults(topic, config.news));
   } else {
-    console.log(formatNews({ ...result, timeZone: config.news.timeZone }));
+    const shortener = createLinkShortener({
+      mode: options.noShort ? 'off' : config.links.shortener,
+      cacheTtlMs: config.links.cacheTtlMs,
+      timeoutMs: config.links.timeoutMs,
+      logger,
+    });
+
+    const links = await shortener.shortenMany(result.items.map((item) => item.link));
+    const items = result.items.map((item) => ({ ...item, link: links.get(item.link) ?? item.link }));
+
+    console.log(formatNews({ ...result, items }));
   }
 
   if (options.stats) {

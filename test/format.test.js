@@ -11,7 +11,7 @@ test('даты: сегодня, вчера, давно (Москва)', () => {
   assert.equal(formatDateLabel(null, 'Europe/Moscow', NOW), 'время неизвестно');
 });
 
-test('сообщение содержит тему, новости и ссылки', () => {
+test('сообщение содержит только тему, новость, описание и ссылку', () => {
   const text = formatNews({
     topic: 'курс доллара',
     total: 1,
@@ -31,9 +31,13 @@ test('сообщение содержит тему, новости и ссылк
 
   assert.match(text, /Новости по теме «курс доллара»/);
   assert.match(text, /1\. ЦБ снизил курс доллара/);
-  assert.match(text, /Ведомости · сегодня, 09:15/);
   assert.match(text, /Официальный курс опустился/);
   assert.match(text, /https:\/\/example\.com\/1/);
+
+  assert.doesNotMatch(text, /Ведомости/);
+  assert.doesNotMatch(text, /сегодня/);
+  assert.doesNotMatch(text, /Период/);
+  assert.doesNotMatch(text, /найдено/);
 });
 
 test('длинная выдача подрезается по лимиту', () => {
@@ -54,7 +58,8 @@ test('длинная выдача подрезается по лимиту', () 
   }, { maxLength: 1_500 });
 
   assert.ok(text.length <= 1_500, `длина ${text.length}`);
-  assert.match(text, /…и ещё \d+/);
+  assert.match(text, /1\. Очень длинный заголовок/);
+  assert.doesNotMatch(text, /…и ещё/);
 });
 
 test('даже одна гигантская новость попадает в ответ', () => {

@@ -1,6 +1,7 @@
 import { parseCommand } from './commands.js';
 import { loadConfig } from './config.js';
 import { formatError, formatHelp, formatNews, formatNoResults, splitMessage } from './format.js';
+import { createLinkShortener } from './links.js';
 import { createLogger } from './logger.js';
 import { createNewsService } from './news/service.js';
 import { createCooldown } from './ratelimit.js';
@@ -29,6 +30,13 @@ async function main() {
   });
 
   const service = createNewsService({ config, logger });
+  const shortener = createLinkShortener({
+    api,
+    mode: config.links.shortener,
+    cacheTtlMs: config.links.cacheTtlMs,
+    timeoutMs: config.links.timeoutMs,
+    logger,
+  });
   const cooldown = createCooldown({ seconds: config.bot.cooldownSec });
   const controller = new AbortController();
 
@@ -89,7 +97,10 @@ async function main() {
         return;
       }
 
-      await send(event.peerId, formatNews({ ...result, timeZone: config.news.timeZone }));
+      const links = await shortener.shortenMany(result.items.map((item) => item.link));
+      const items = result.items.map((item) => ({ ...item, link: links.get(item.link) ?? item.link }));
+
+      await send(event.peerId, formatNews({ ...result, items }));
     } catch (error) {
       logger.error('Ошибка при поиске новостей', { topic, error });
       await send(event.peerId, formatError(topic));
