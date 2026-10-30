@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
+import { fetchTextResource } from '../http.js';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -190,31 +191,12 @@ export function parseFeed(xml, feed) {
 
 export async function fetchFeed(feed, { timeoutMs = 12_000, userAgent, fetchImpl = fetch, logger } = {}) {
   try {
-    const response = await fetchImpl(feed.url, {
-      headers: {
-        'user-agent': userAgent ?? 'Mozilla/5.0 (compatible; vk-news-bot/1.0)',
-        accept: 'application/rss+xml, application/xml, text/xml, */*',
-        'accept-language': 'ru-RU,ru;q=0.9,en;q=0.5',
-      },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(timeoutMs),
+    const { text: xml } = await fetchTextResource(feed.url, {
+      timeoutMs,
+      userAgent,
+      fetchImpl,
+      accept: 'application/rss+xml, application/xml, text/xml, */*',
     });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const buffer = await response.arrayBuffer();
-    const head = new TextDecoder('latin1').decode(buffer.slice(0, 300));
-    const charset =
-      /charset=["']?([\w-]+)/i.exec(response.headers?.get?.('content-type') ?? '')?.[1] ??
-      /encoding=["']([\w-]+)["']/i.exec(head)?.[1] ??
-      'utf-8';
-
-    let xml;
-    try {
-      xml = new TextDecoder(charset).decode(buffer);
-    } catch {
-      xml = new TextDecoder('utf-8').decode(buffer);
-    }
 
     const items = parseFeed(xml, feed);
     if (items.length === 0) throw new Error('в фиде не найдено ни одной новости');

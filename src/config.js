@@ -86,6 +86,10 @@ export function loadConfig({ requireVk = true } = {}) {
       responseCacheTtlMs: readInt('NEWS_RESPONSE_CACHE_SEC', 180, { min: 0, max: 3_600 }) * 1_000,
       requestTimeoutMs: readInt('NEWS_REQUEST_TIMEOUT_MS', 12_000, { min: 1_000, max: 60_000 }),
       concurrency: readInt('NEWS_CONCURRENCY', 6, { min: 1, max: 20 }),
+      fulltext: readBool('NEWS_FULLTEXT', true),
+      fulltextCandidates: readInt('NEWS_FULLTEXT_CANDIDATES', 8, { min: 1, max: 24 }),
+      fulltextTimeoutMs: readInt('NEWS_FULLTEXT_TIMEOUT_MS', 6_000, { min: 1_000, max: 60_000 }),
+      fulltextMaxChars: readInt('NEWS_FULLTEXT_MAX_CHARS', 1_500, { min: 200, max: 10_000 }),
       userAgent: readString(
         'NEWS_USER_AGENT',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',

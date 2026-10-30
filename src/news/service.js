@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { refineNews } from '../ai/deepseek.js';
-import { truncate } from '../utils.js';
+import { mapLimit, truncate } from '../utils.js';
+import { createArticleFetcher } from './article.js';
 import { createFeedLoader, loadFeedsFromJson } from './feeds.js';
 import { createNewsSearch } from './search.js';
 import { loadSynonyms } from './synonyms.js';
@@ -42,10 +43,31 @@ export function createNewsService({ config, logger, fetchImpl = fetch, now = () 
     synonyms: loadSynonyms(config.news.synonymsPath),
     now,
   });
+
+  const articleFetcher = createArticleFetcher({
+    timeoutMs: config.news.fulltextTimeoutMs,
+    maxChars: config.news.fulltextMaxChars,
+    userAgent: config.news.userAgent,
+    fetchImpl,
+    logger,
+  });
+
   const cache = new Map();
 
   async function build(topic, { exact }) {
     const found = await search.search(topic, { exact });
+
+    if (config.ai.enabled && config.news.fulltext !== false && found.items.length > 0) {
+      const limit = config.news.fulltextCandidates ?? 8;
+      const targets = found.items.slice(0, limit);
+      const texts = await mapLimit(targets, 4, (item) => articleFetcher.get(item.link));
+
+      targets.forEach((item, index) => {
+        if (texts[index]) item.articleText = texts[index];
+      });
+
+      logger?.debug('Тексты статей загружены', { requested: targets.length, ok: texts.filter(Boolean).length });
+    }
 
     let items;
     let aiUsed = false;

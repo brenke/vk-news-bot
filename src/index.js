@@ -89,6 +89,12 @@ async function main() {
 
     await api.setTyping(event.peerId);
 
+    // Пока ищем и пересказываем, поддерживаем индикатор «печатает».
+    const typingTimer = setInterval(() => {
+      void api.setTyping(event.peerId);
+    }, 4_000);
+    typingTimer.unref?.();
+
     try {
       const result = await service.get(topic, { exact: command.exact });
 
@@ -104,6 +110,8 @@ async function main() {
     } catch (error) {
       logger.error('Ошибка при поиске новостей', { topic, error });
       await send(event.peerId, formatError(topic));
+    } finally {
+      clearInterval(typingTimer);
     }
   }
 

@@ -26,6 +26,21 @@ test('промпт содержит тему и нумерованный спи�
   assert.match(prompt, /\[2\] РБК/);
 });
 
+test('промпт использует текст статьи вместо короткого описания', () => {
+  const withArticle = [
+    {
+      ...items[0],
+      description: 'Короткое описание.',
+      articleText: 'Полный текст статьи с ключевыми цифрами и подробностями события.',
+    },
+  ];
+
+  const prompt = buildUserPrompt({ topic: 'курс доллара', items: withArticle });
+
+  assert.match(prompt, /Текст: Полный текст статьи/);
+  assert.doesNotMatch(prompt, /Текст: Короткое описание/);
+});
+
 test('parseModelResponse понимает ```json и отбрасывает неверные индексы', () => {
   const response = parseModelResponse(
     '```json\n{"items":[{"index":2,"summary":"Второе описание"},{"index":9,"summary":"мусор"},{"index":2,"summary":"дубль"}]}\n```',
