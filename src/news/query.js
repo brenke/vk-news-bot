@@ -11,10 +11,13 @@ const STOP_WORDS = new Set([
 
 // Окончания отсортированы по убыванию длины: срезаем самое длинное подходящее.
 const ENDINGS = [
-  'иями', 'ями', 'ами', 'ов', 'ев', 'ей', 'ой', 'ый', 'ий', 'ая', 'ое', 'ые', 'их', 'ых', 'ую',
-  'юю', 'ям', 'ам', 'ом', 'ем', 'ах', 'ях', 'ия', 'ии', 'ье', 'ья', 'ет', 'ут', 'ют',
+  'иями', 'ями', 'ами', 'ого', 'его', 'ому', 'ему', 'ыми', 'ими',
+  'ов', 'ев', 'ей', 'ой', 'ый', 'ий', 'ым', 'им', 'ая', 'яя', 'ое', 'ее', 'ые', 'ие', 'их', 'ых',
+  'ую', 'юю', 'ям', 'ам', 'ом', 'ем', 'ах', 'ях', 'ия', 'ии', 'ье', 'ья', 'ет', 'ут', 'ют',
   'ит', 'ат', 'ят', 'ла', 'ло', 'ли', 'ешь', 'ишь', 'у', 'ю', 'а', 'я', 'ы', 'и', 'о', 'е', 'ь',
 ].sort((a, b) => b.length - a.length);
+
+const SINGLE_LETTER_ENDINGS = new Set(['у', 'ю', 'а', 'я', 'ы', 'и', 'о', 'е', 'ь']);
 
 export function normalizeText(value) {
   return String(value ?? '')
@@ -27,12 +30,21 @@ export function normalizeText(value) {
 /** Очень лёгкий стеммер: срезает типичные русские окончания. */
 export function stem(word) {
   const value = normalizeText(word);
-  if (value.length <= 4) return value;
+  if (value.length < 4) return value;
 
   for (const ending of ENDINGS) {
-    if (value.endsWith(ending) && value.length - ending.length >= 4) {
-      return value.slice(0, -ending.length);
+    if (!value.endsWith(ending)) continue;
+
+    const rest = value.length - ending.length;
+
+    // Короткие слова режем только по одному символу, иначе «билет» превращается в «бил».
+    if (SINGLE_LETTER_ENDINGS.has(ending)) {
+      if (rest < 3) continue;
+    } else if (value.length < 6 || rest < 4) {
+      continue;
     }
+
+    return value.slice(0, rest);
   }
 
   return value;
@@ -82,8 +94,8 @@ export function buildQuery(topic, { exact = false, synonyms = null } = {}) {
 function stemsMatch(a, b) {
   if (a === b) return true;
 
-  // Допускаем небольшие расхождения суффиксов: «доллар» / «долларов», «искусственн» / «искусственного».
-  if (a.length >= 5 && b.length >= 5 && Math.abs(a.length - b.length) <= 2) {
+  // Допускаем небольшие расхождения суффиксов: «доллар» / «долларов», «новост» / «новостной».
+  if (a.length >= 6 && b.length >= 6 && Math.abs(a.length - b.length) <= 2) {
     if (a.startsWith(b) || b.startsWith(a)) return true;
   }
 

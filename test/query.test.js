@@ -54,6 +54,20 @@ test('нерелевантная новость не проходит', () => {
   assert.equal(scoreItem(item, query), null);
 });
 
+test('регрессия: «выборы» не цепляет «Выборг»', () => {
+  const query = buildQuery('выборы');
+  const item = prepareItem({ title: 'В Выборге пройдёт хоккейный матч', description: '' });
+
+  assert.equal(scoreItem(item, query), null);
+});
+
+test('короткие слова: «цена» и «цены» совпадают', () => {
+  const query = buildQuery('цена');
+  const item = prepareItem({ title: 'Цены на нефть выросли', description: '' });
+
+  assert.ok(scoreItem(item, query));
+});
+
 test('синонимы расширяют категорийную тему', () => {
   const synonyms = new Map([['спорт', ['футбол', 'хоккей']]]);
   const query = buildQuery('спорт', { synonyms });

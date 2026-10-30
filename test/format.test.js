@@ -57,6 +57,30 @@ test('длинная выдача подрезается по лимиту', () 
   assert.match(text, /…и ещё \d+/);
 });
 
+test('даже одна гигантская новость попадает в ответ', () => {
+  const text = formatNews(
+    {
+      topic: 'тест',
+      total: 1,
+      windowHours: 72,
+      timeZone: 'Europe/Moscow',
+      items: [
+        {
+          title: 'Т'.repeat(5_000),
+          source: 'Источник',
+          date: NOW,
+          summary: '',
+          link: 'https://example.com/1',
+        },
+      ],
+    },
+    { maxLength: 1_000 },
+  );
+
+  assert.ok(text.length <= 1_000);
+  assert.match(text, /https:\/\/example\.com\/1/);
+});
+
 test('пустая выдача — подсказка', () => {
   const text = formatNoResults('абракадабра', { windowHours: 48 });
   assert.match(text, /ничего не нашлось/);

@@ -1,3 +1,5 @@
+import { truncate } from './utils.js';
+
 const MONTHS_SHORT = ['янв.', 'февр.', 'мар.', 'апр.', 'мая', 'июн.', 'июл.', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
 
 function zonedParts(date, timeZone) {
@@ -87,7 +89,19 @@ export function formatNews(result, { maxLength = 3_900 } = {}) {
     shown += 1;
   }
 
-  if (shown === 0) return formatNoResults(topic, { windowHours });
+  if (shown === 0) {
+    const item = items[0];
+    const fallback = [
+      `1. ${truncate(item.title, 400)}`,
+      `${item.source} · ${formatDateLabel(item.date, timeZone)}`,
+      item.summary ? truncate(item.summary, 200) : '',
+      `→ ${item.link}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return `${header}\n\n${fallback}`.slice(0, maxLength);
+  }
 
   const skipped = items.length - shown;
   let text = `${header}\n\n${body}`;
