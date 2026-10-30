@@ -1,0 +1,19 @@
+[
+  { "name": "Лента.ру", "url": "https://lenta.ru/rss/news" },
+  { "name": "РИА Новости", "url": "https://ria.ru/export/rss2/archive/index.xml" },
+  { "name": "ТАСС", "url": "https://tass.ru/rss/v2.xml" },
+  { "name": "РБК", "url": "https://rssexport.rbc.ru/rbcnews/news/30/full.rss" },
+  { "name": "Интерфакс", "url": "https://www.interfax.ru/rss.asp" },
+  { "name": "Коммерсантъ", "url": "https://www.kommersant.ru/RSS/news.xml" },
+  { "name": "Ведомости", "url": "https://www.vedomosti.ru/rss/news" },
+  { "name": "Газета.Ru", "url": "https://www.gazeta.ru/export/rss/first.xml" },
+  { "name": "МК", "url": "https://www.mk.ru/rss/index.xml" },
+  { "name": "RT на русском", "url": "https://russian.rt.com/rss" },
+  { "name": "Лента.ру — наука", "url": "https://lenta.ru/rss/news/science" },
+  { "name": "Лента.ру — спорт", "url": "https://lenta.ru/rss/news/sport" },
+  { "name": "Газета.Ru — наука", "url": "https://www.gazeta.ru/export/rss/science.xml" },
+  { "name": "Чемпионат", "url": "https://www.championat.com/rss/news/" },
+  { "name": "Хабр", "url": "https://habr.com/ru/rss/news/?fl=ru" },
+  { "name": "3DNews", "url": "https://3dnews.ru/news/rss/" },
+  { "name": "vc.ru", "url": "https://vc.ru/rss" }
+]

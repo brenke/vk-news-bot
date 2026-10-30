@@ -1,0 +1,18 @@
+[Unit]
+Description=VK news bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vknews
+WorkingDirectory=/opt/vk-news-bot
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
