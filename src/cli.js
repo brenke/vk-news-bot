@@ -1,6 +1,6 @@
 import { loadConfig } from './config.js';
 import { formatNews, formatNoResults } from './format.js';
-import { createLinkShortener } from './links.js';
+import { createLinkShortener, shortenItemLinks } from './links.js';
 import { createLogger } from './logger.js';
 import { createNewsService } from './news/service.js';
 
@@ -112,6 +112,7 @@ async function main() {
             date: item.date instanceof Date ? item.date.toISOString() : null,
             summary: item.summary,
             link: item.link,
+            sources: item.sources ?? [],
           })),
         },
         null,
@@ -131,8 +132,7 @@ async function main() {
       logger,
     });
 
-    const links = await shortener.shortenMany(result.items.map((item) => item.link));
-    const items = result.items.map((item) => ({ ...item, link: links.get(item.link) ?? item.link }));
+    const items = await shortenItemLinks(shortener, result.items);
 
     console.log(formatNews({ ...result, items }));
   }

@@ -90,6 +90,8 @@ export function loadConfig({ requireVk = true } = {}) {
       fulltextCandidates: readInt('NEWS_FULLTEXT_CANDIDATES', 8, { min: 1, max: 24 }),
       fulltextTimeoutMs: readInt('NEWS_FULLTEXT_TIMEOUT_MS', 6_000, { min: 1_000, max: 60_000 }),
       fulltextMaxChars: readInt('NEWS_FULLTEXT_MAX_CHARS', 1_500, { min: 200, max: 10_000 }),
+      cluster: readBool('NEWS_CLUSTER', true),
+      clusterMaxSources: readInt('NEWS_CLUSTER_MAX_SOURCES', 2, { min: 0, max: 4 }),
       userAgent: readString(
         'NEWS_USER_AGENT',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',

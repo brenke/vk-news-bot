@@ -65,6 +65,13 @@ function itemBlock(item, index) {
   const lines = [`${index + 1}. ${item.title}`];
   if (item.summary) lines.push(item.summary);
   lines.push(item.link);
+
+  const sources = item.sources ?? [];
+  if (sources.length > 0) {
+    const parts = sources.map((source) => `${source.source} — ${source.link}`);
+    lines.push(`Ещё: ${parts.join(' · ')}`);
+  }
+
   return lines.join('\n');
 }
 

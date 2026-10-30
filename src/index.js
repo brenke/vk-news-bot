@@ -1,7 +1,7 @@
 import { parseCommand } from './commands.js';
 import { loadConfig } from './config.js';
 import { formatError, formatHelp, formatNews, formatNoResults, splitMessage } from './format.js';
-import { createLinkShortener } from './links.js';
+import { createLinkShortener, shortenItemLinks } from './links.js';
 import { createLogger } from './logger.js';
 import { createNewsService } from './news/service.js';
 import { createCooldown } from './ratelimit.js';
@@ -103,8 +103,7 @@ async function main() {
         return;
       }
 
-      const links = await shortener.shortenMany(result.items.map((item) => item.link));
-      const items = result.items.map((item) => ({ ...item, link: links.get(item.link) ?? item.link }));
+      const items = await shortenItemLinks(shortener, result.items);
 
       await send(event.peerId, formatNews({ ...result, items }));
     } catch (error) {

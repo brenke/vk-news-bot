@@ -86,6 +86,22 @@ test('даже одна гигантская новость попадает в 
   assert.match(text, /https:\/\/example\.com\/1/);
 });
 
+test('дополнительные источники выводятся строкой «Ещё»', () => {
+  const text = formatNews({
+    topic: 'нефть',
+    items: [
+      {
+        title: 'Разлив нефти в Ормузском проливе',
+        summary: 'Пляжи закрыли в трёх эмиратах.',
+        link: 'https://vk.cc/a',
+        sources: [{ source: 'РБК', link: 'https://vk.cc/b' }],
+      },
+    ],
+  });
+
+  assert.match(text, /Ещё: РБК — https:\/\/vk\.cc\/b/);
+});
+
 test('пустая выдача — подсказка', () => {
   const text = formatNoResults('абракадабра', { windowHours: 48 });
   assert.match(text, /ничего не нашлось/);

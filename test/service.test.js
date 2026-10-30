@@ -22,6 +22,8 @@ function makeConfig(feedsPath) {
       fulltextCandidates: 8,
       fulltextTimeoutMs: 2_000,
       fulltextMaxChars: 500,
+      cluster: true,
+      clusterMaxSources: 2,
       feedsPath,
     },
   };
@@ -104,6 +106,33 @@ test('сервис не падает, если фид недоступен', asy
 
   const result = await service.get('доллар');
   assert.equal(result.items.length, 0);
+});
+
+test('сюжеты из разных фидов склеиваются в один пункт', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'vk-news-bot-'));
+  const feedsPath = path.join(dir, 'feeds.json');
+
+  writeFileSync(
+    feedsPath,
+    JSON.stringify([
+      { name: 'Первый', url: 'https://one.example/rss' },
+      { name: 'Второй', url: 'https://two.example/rss' },
+    ]),
+  );
+
+  const fetchImpl = async (url) => {
+    const xml = url.includes('one')
+      ? rss('Разлив нефти в Ормузском проливе закрыл пляжи ОАЭ', 'https://one.example/1')
+      : rss('Разлив нефти у берегов ОАЭ: закрыты пляжи в трёх эмиратах', 'https://two.example/1');
+
+    return textResponse(xml, 'application/rss+xml; charset=utf-8');
+  };
+
+  const result = await createNewsService({ config: makeConfig(feedsPath), logger: null, fetchImpl }).get('нефть');
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].sources.length, 1);
+  assert.match(result.items[0].sources[0].link, /two\.example/);
 });
 
 test('с включённым ИИ читает статью и передаёт текст модели', async () => {

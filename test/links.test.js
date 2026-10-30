@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createLinkShortener } from '../src/links.js';
+import { createLinkShortener, shortenItemLinks } from '../src/links.js';
 
 const LONG = 'https://www.vedomosti.ru/finance/news/2026/10/29/1241268-ofitsialnii-kurs';
 
@@ -75,8 +75,7 @@ test('mode=off ничего не меняет и не ходит в сеть', a
   assert.equal(fetched, false);
 });
 
-test('shortenMany дедуплицирует и сохраняет соответствие', async () => {
-  let calls = 0;
+test('shortenMany дедуплицирует и сохраняет соответствие', async () => {  let calls = 0;
   const api = {
     async call(method, params) {
       calls += 1;
@@ -97,4 +96,28 @@ test('shortenMany дедуплицирует и сохраняет соотве�
   assert.equal(map.get('https://example.com/two'), 'https://vk.cc/two');
   assert.equal(map.has('не ссылка'), false);
   assert.equal(calls, 2);
+});
+
+test('shortenItemLinks сокращает основную ссылку и источники', async () => {
+  const api = {
+    async call(method, params) {
+      return { short_url: params.url.endsWith('/2') ? 'https://vk.cc/b' : 'https://vk.cc/a' };
+    },
+  };
+
+  const shortener = createLinkShortener({ api, mode: 'vk' });
+  const items = [
+    {
+      title: 'Новость',
+      link: 'https://example.com/1',
+      sources: [{ source: 'РБК', link: 'https://example.com/2' }],
+    },
+  ];
+
+  const result = await shortenItemLinks(shortener, items);
+
+  assert.equal(result[0].link, 'https://vk.cc/a');
+  assert.equal(result[0].sources[0].link, 'https://vk.cc/b');
+  assert.equal(result[0].sources[0].source, 'РБК');
+  assert.equal(items[0].link, 'https://example.com/1', 'исходный объект не мутируется');
 });

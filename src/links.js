@@ -79,3 +79,26 @@ export function createLinkShortener({ api = null, mode = 'auto', logger, fetchIm
     clear: () => cache.clear(),
   };
 }
+
+/**
+ * Сокращает основную ссылку и ссылки на другие источники у списка новостей.
+ */
+export async function shortenItemLinks(shortener, items) {
+  const urls = [];
+
+  for (const item of items) {
+    urls.push(item.link);
+    for (const source of item.sources ?? []) urls.push(source.link);
+  }
+
+  const map = await shortener.shortenMany(urls);
+
+  return items.map((item) => ({
+    ...item,
+    link: map.get(item.link) ?? item.link,
+    sources: (item.sources ?? []).map((source) => ({
+      ...source,
+      link: map.get(source.link) ?? source.link,
+    })),
+  }));
+}

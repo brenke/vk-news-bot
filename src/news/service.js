@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { refineNews } from '../ai/deepseek.js';
 import { mapLimit, truncate } from '../utils.js';
 import { createArticleFetcher } from './article.js';
+import { clusterItems } from './cluster.js';
 import { createFeedLoader, loadFeedsFromJson } from './feeds.js';
 import { createNewsSearch } from './search.js';
 import { loadSynonyms } from './synonyms.js';
@@ -57,9 +58,14 @@ export function createNewsService({ config, logger, fetchImpl = fetch, now = () 
   async function build(topic, { exact }) {
     const found = await search.search(topic, { exact });
 
-    if (config.ai.enabled && config.news.fulltext !== false && found.items.length > 0) {
+    const candidates =
+      config.news.cluster === false
+        ? found.items
+        : clusterItems(found.items, { maxSources: config.news.clusterMaxSources ?? 2 });
+
+    if (config.ai.enabled && config.news.fulltext !== false && candidates.length > 0) {
       const limit = config.news.fulltextCandidates ?? 8;
-      const targets = found.items.slice(0, limit);
+      const targets = candidates.slice(0, limit);
       const texts = await mapLimit(targets, 4, (item) => articleFetcher.get(item.link));
 
       targets.forEach((item, index) => {
@@ -70,12 +76,13 @@ export function createNewsService({ config, logger, fetchImpl = fetch, now = () 
     }
 
     let items;
+
     let aiUsed = false;
 
-    if (config.ai.enabled && found.items.length > 0) {
+    if (config.ai.enabled && candidates.length > 0) {
       const refined = await refineNews({
         topic,
-        items: found.items,
+        items: candidates,
         limit: config.news.maxItems,
         config,
         logger,
@@ -89,7 +96,7 @@ export function createNewsService({ config, logger, fetchImpl = fetch, now = () 
     }
 
     if (!items) {
-      items = found.items.slice(0, config.news.maxItems).map((item) => ({
+      items = candidates.slice(0, config.news.maxItems).map((item) => ({
         ...item,
         summary: truncate(item.description, 240),
       }));
